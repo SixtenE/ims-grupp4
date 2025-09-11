@@ -8,7 +8,11 @@ const manufacturerModel = mongoose.model(
     website: { type: String, required: true },
     description: { type: String, required: false },
     address: { type: String, required: false },
-    contact: { type: String, required: false },
+    contact: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: false,
+      ref: "Contact",
+    },
   })
 );
 

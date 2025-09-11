@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ref } from "process";
 
 const productModel = mongoose.model(
   "Product",
@@ -8,7 +9,11 @@ const productModel = mongoose.model(
     description: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
-    manufacturer: { type: String, required: true },
+    manufacturer: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Manufacturer",
+    },
     amountInStock: { type: Number, required: true },
   })
 );
