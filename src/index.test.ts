@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
+import request from "supertest";
+import { app } from ".";
 
-const double = (x: number) => x * 2;
-
-describe("double", () => {
-  it("doubles a number", () => {
-    expect(double(2)).toBe(4);
+describe("test root endpoint", () => {
+  it("should return a welcome message", async () => {
+    const response = await request(app).get("/");
+    expect(response.status).toBe(200);
+    const expectedResponse = {
+      message: "mongokjell",
+    };
+    expect(response.body).toEqual(expectedResponse);
   });
 });
