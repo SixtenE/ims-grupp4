@@ -1,17 +1,50 @@
-export async function getAllProducts() {}
+import { Request, Response } from "express";
 
-export async function getProductById(id: string) {}
+export async function getAllProducts(req: Request, res: Response) {
+  res.status(200).json({ message: "getAllProducts" });
+}
 
-export async function createProduct(productData: any) {}
+export async function getProductById(req: Request, res: Response) {
+  const { id } = req.params;
+  res.status(200).json({ message: `getProductById: ${id}` });
+}
 
-export async function updateProductById(id: string, productData: any) {}
+export async function createProduct(req: Request, res: Response) {
+  const productData = req.body;
+  res.status(201).json({ message: "createProduct", data: productData });
+}
 
-export async function deleteProductById(id: string) {}
+export async function updateProductById(req: Request, res: Response) {
+  const { id } = req.params;
+  const updatedData = req.body;
+  res
+    .status(200)
+    .json({ message: `updateProductById: ${id}`, data: updatedData });
+}
 
-export async function getTotalStockValue() {}
+export async function deleteProductById(req: Request, res: Response) {
+  const { id } = req.params;
+  res.status(200).json({ message: `deleteProductById: ${id}` });
+}
 
-export async function getTotalStockValueByManufacturer(manufacturer: string) {}
+export async function getTotalStockValue(req: Request, res: Response) {
+  res.status(200).json({ message: "getTotalStockValue" });
+}
 
-export async function getLowStockProducts(threshold: number) {}
+export async function getTotalStockValueByManufacturer(
+  req: Request,
+  res: Response
+) {
+  const { manufacturer } = req.params;
+  res
+    .status(200)
+    .json({ message: `getTotalStockValueByManufacturer: ${manufacturer}` });
+}
 
-export async function getCriticalStockProducts() {}
+export async function getLowStockProducts(req: Request, res: Response) {
+  res.status(200).json({ message: "getLowStockProducts" });
+}
+
+export async function getCriticalStockProducts(req: Request, res: Response) {
+  res.status(200).json({ message: "getCriticalStockProducts" });
+}

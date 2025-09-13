@@ -1,4 +1,4 @@
-import { Request, Router, Response } from "express";
+import { Router } from "express";
 import {
   getAllProducts,
   getProductById,

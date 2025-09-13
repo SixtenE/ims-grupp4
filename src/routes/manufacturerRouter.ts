@@ -1,4 +1,4 @@
-import { Request, Router, Response } from "express";
+import { Router } from "express";
 import { getAllManufacturers } from "../controllers/manufacturerController";
 
 const router: Router = Router();
