@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-export async function getAllProducts(req: Request, res: Response) {
+export async function getAllProducts(_req: Request, res: Response) {
   res.status(200).json({ message: "getAllProducts" });
 }
 
@@ -27,7 +27,7 @@ export async function deleteProductById(req: Request, res: Response) {
   res.status(200).json({ message: `deleteProductById: ${id}` });
 }
 
-export async function getTotalStockValue(req: Request, res: Response) {
+export async function getTotalStockValue(_req: Request, res: Response) {
   res.status(200).json({ message: "getTotalStockValue" });
 }
 
@@ -41,10 +41,10 @@ export async function getTotalStockValueByManufacturer(
     .json({ message: `getTotalStockValueByManufacturer: ${manufacturer}` });
 }
 
-export async function getLowStockProducts(req: Request, res: Response) {
+export async function getLowStockProducts(_req: Request, res: Response) {
   res.status(200).json({ message: "getLowStockProducts" });
 }
 
-export async function getCriticalStockProducts(req: Request, res: Response) {
+export async function getCriticalStockProducts(_req: Request, res: Response) {
   res.status(200).json({ message: "getCriticalStockProducts" });
 }

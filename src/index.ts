@@ -3,12 +3,12 @@ import "dotenv/config";
 import productRouter from "./routes/productRouter";
 import manufacturerRouter from "./routes/manufacturerRouter";
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+const PORT = process.env["PORT"] ? parseInt(process.env["PORT"]) : 3000;
 
 const app: Application = express();
 app.use(express.json());
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({ message: "mongokjell" });
 });
 
