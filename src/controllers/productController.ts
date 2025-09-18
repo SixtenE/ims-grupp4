@@ -148,7 +148,13 @@ export async function getTotalStockValueByManufacturer(
 }
 
 export async function getLowStockProducts(_req: Request, res: Response) {
-  res.status(200).json({ message: "getLowStockProducts" });
+  try {
+    const pipeline = [{ $match: { amountInStock: { $lt: 10 } } }];
+    const products = await Product.aggregate(pipeline);
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ error: "Failed fetch low stock value", err: error });
+  }
 }
 
 //Hämta en kompakt lista över produkter med färre än 5 enheter i lager (inkluderar endast tillverkarens/manufacturer samt kontaktens/contact namn, telefon och e-post)

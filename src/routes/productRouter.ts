@@ -13,22 +13,22 @@ import {
 
 const router: Router = Router();
 
+router.post("/products", createProduct);
+
 router.get("/products", getAllProducts);
+
+router.get("/products/totalStockValue", getTotalStockValue);
 
 router.get(
   "/products/totalStockValueByManufacturer",
   getTotalStockValueByManufacturer
 );
 
-router.get("/products/totalStockValue", getTotalStockValue);
-
 router.get("/products/low-stock", getLowStockProducts);
 
 router.get("/products/critical-stock", getCriticalStockProducts);
 
 router.get("/products/:id", getProductById);
-
-router.post("/products", createProduct);
 
 router.put("/products/:id", updateProductById);
 
