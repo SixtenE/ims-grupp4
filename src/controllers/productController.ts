@@ -140,9 +140,10 @@ export async function getTotalStockValueByManufacturer(
     const products = await Product.aggregate(pipeline);
     res.status(200).json(products);
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed fetch total stock value", err: error });
+    res.status(500).json({
+      error: "Failed fetch total stock value by manufacturer",
+      err: error,
+    });
   }
 }
 
@@ -156,6 +157,52 @@ export async function getLowStockProducts(_req: Request, res: Response) {
   }
 }
 
+//Hämta en kompakt lista över produkter med färre än 5 enheter i lager (inkluderar endast tillverkarens/manufacturer samt kontaktens/contact namn, telefon och e-post)
 export async function getCriticalStockProducts(_req: Request, res: Response) {
-  res.status(200).json({ message: "getCriticalStockProducts" });
+  const pipeline = [
+    {
+      $match: { amountInStock: { $lt: 5 } },
+    },
+    {
+      $lookup: {
+        from: "manufacturers",
+        localField: "manufacturer",
+        foreignField: "_id",
+        as: "manufacturer",
+      },
+    },
+    {
+      $unwind: "$manufacturer",
+    },
+
+    {
+      $lookup: {
+        from: "contacts",
+        localField: "manufacturer.contact",
+        foreignField: "_id",
+        as: "contact",
+      },
+    },
+    {
+      $unwind: "$contact",
+    },
+    {
+      $project: {
+        productName: "$name",
+        manufacturerName: "$manufacturer.name",
+        contactName: "$contact.name",
+        contactPhone: "$contact.phone",
+        contactEmail: "$contact.email",
+      },
+    },
+  ];
+
+  try {
+    const products = await Product.aggregate(pipeline);
+    res.status(200).json(products);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch critical stock products", err: error });
+  }
 }

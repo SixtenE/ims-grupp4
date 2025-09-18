@@ -8,6 +8,7 @@ import {
   getTotalStockValue,
   getTotalStockValueByManufacturer,
   getLowStockProducts,
+  getCriticalStockProducts,
 } from "../controllers/productController";
 
 const router: Router = Router();
@@ -23,7 +24,9 @@ router.get(
   getTotalStockValueByManufacturer
 );
 
-router.get("/products/lowStock", getLowStockProducts);
+router.get("/products/low-stock", getLowStockProducts);
+
+router.get("/products/critical-stock", getCriticalStockProducts);
 
 router.get("/products/:id", getProductById);
 
