@@ -1,1 +1,9 @@
-export const resolvers = {};
+import Product from "../models/Product";
+
+export const resolvers = {
+  Query: {
+    products: async () => {
+      return await Product.find();
+    },
+  },
+};

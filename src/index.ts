@@ -16,7 +16,9 @@ app.use(express.json());
 
 //GraphQL setup
 const apollo = new ApolloServer({ typeDefs, resolvers });
-app.use("/graphql", expressMiddleware(apollo));
+connectToApollo().then(() => {
+  app.use("/graphql", expressMiddleware(apollo));
+});
 
 async function connectToMongo() {
   try {
@@ -38,7 +40,6 @@ async function connectToApollo() {
 }
 
 connectToMongo();
-connectToApollo();
 
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({ message: "mongokjell" });
