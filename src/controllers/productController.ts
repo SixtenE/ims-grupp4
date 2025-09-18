@@ -43,10 +43,27 @@ export async function createProduct(req: Request, res: Response) {
 
 export async function updateProductById(req: Request, res: Response) {
   const { id } = req.params;
-  const updatedData = req.body;
-  res
-    .status(200)
-    .json({ message: `updateProductById: ${id}`, data: updatedData });
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ error: "Not valid objectId" });
+  }
+
+  try {
+    const product = await Product.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    return res.status(200).json(product);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "Failed to update product", err: error });
+  }
 }
 
 export async function deleteProductById(req: Request, res: Response) {
