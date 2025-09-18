@@ -114,13 +114,36 @@ export async function getTotalStockValue(_req: Request, res: Response) {
 }
 
 export async function getTotalStockValueByManufacturer(
-  req: Request,
+  _req: Request,
   res: Response
-) {
-  const { manufacturer } = req.params;
-  res
-    .status(200)
-    .json({ message: `getTotalStockValueByManufacturer: ${manufacturer}` });
+) {try {
+
+const pipeline = [
+  {
+    $lookup: {
+      from: "manufacturers",
+      localField: "manufacturer",
+      foreignField: "_id",
+      as: "manufacturer"
+    },
+  },
+  {
+    $unwind: "$manufacturer",
+  },
+  {
+    $group: {
+      _id: "$manufacturer",
+      totalStockValue: { $sum: "$totalValue"}
+    }
+  }
+
+  //Skapa project
+]
+const products = await Product.aggregate(pipeline)
+res.status(200).json(products);
+} catch (error) {
+  
+}
 }
 
 export async function getLowStockProducts(_req: Request, res: Response) {
