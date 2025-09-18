@@ -32,6 +32,7 @@ export async function createProduct(req: Request, res: Response) {
   try {
     const product = await Product.create(req.body);
     res.status(201).json(product);
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (err.code === 11000) {
       res.status(409).json({ error: "Sku already exist" });
@@ -68,7 +69,24 @@ export async function updateProductById(req: Request, res: Response) {
 
 export async function deleteProductById(req: Request, res: Response) {
   const { id } = req.params;
-  res.status(200).json({ message: `deleteProductById: ${id}` });
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ error: "Not valid objectId" });
+  }
+
+  try {
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Product deleted successfully", product });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "Failed to delete product", err: error });
+  }
 }
 
 export async function getTotalStockValue(_req: Request, res: Response) {
