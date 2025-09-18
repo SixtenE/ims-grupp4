@@ -3,6 +3,7 @@ import "dotenv/config";
 import productRouter from "./routes/productRouter";
 import manufacturerRouter from "./routes/manufacturerRouter";
 import mongoose from "mongoose";
+import { seedDatabase } from "./utils/seed";
 
 const PORT = process.env["PORT"] ? parseInt(process.env["PORT"]) : 3000;
 
@@ -28,6 +29,8 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use("/api", productRouter);
 app.use("/api", manufacturerRouter);
+
+app.post("/seed", seedDatabase);
 
 const server = app.listen(PORT, "::", () => {
   console.log(`Server is running at ${JSON.stringify(server.address())}`);
