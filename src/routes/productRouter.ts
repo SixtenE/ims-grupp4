@@ -12,7 +12,11 @@ import {
 
 const router: Router = Router();
 
+router.post("/products", createProduct);
+
 router.get("/products", getAllProducts);
+
+router.get("/products/totalStockValue", getTotalStockValue);
 
 router.get(
   "/products/totalStockValueByManufacturer",
@@ -23,12 +27,8 @@ router.get("/products/lowStock", getLowStockProducts);
 
 router.get("/products/:id", getProductById);
 
-router.post("/products", createProduct);
-
 router.put("/products/:id", updateProductById);
 
 router.delete("/products/:id", deleteProductById);
-
-router.get("/products/totalStockValue", getTotalStockValue);
 
 export default router;
