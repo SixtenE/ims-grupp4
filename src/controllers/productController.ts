@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
+import Product from "../models/Product";
 
 export async function getAllProducts(_req: Request, res: Response) {
-  res.status(200).json({ message: "getAllProducts" });
+  const products = await Product.find();
+  res.status(200).json(products);
 }
 
 export async function getProductById(req: Request, res: Response) {
