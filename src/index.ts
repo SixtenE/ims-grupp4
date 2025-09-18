@@ -4,11 +4,19 @@ import productRouter from "./routes/productRouter";
 import manufacturerRouter from "./routes/manufacturerRouter";
 import mongoose from "mongoose";
 import { seedDatabase } from "./utils/seed";
+import { ApolloServer } from "@apollo/server";
+import { resolvers } from "./graphql/resolvers";
+import { typeDefs } from "./graphql/typeDefs";
+import { expressMiddleware } from "@as-integrations/express5";
 
 const PORT = process.env["PORT"] ? parseInt(process.env["PORT"]) : 3000;
 
 const app: Application = express();
 app.use(express.json());
+
+//GraphQL setup
+const apollo = new ApolloServer({ typeDefs, resolvers });
+app.use("/graphql", expressMiddleware(apollo));
 
 async function connectToMongo() {
   try {
@@ -21,7 +29,16 @@ async function connectToMongo() {
   }
 }
 
+async function connectToApollo() {
+  try {
+    await apollo.start();
+  } catch (error) {
+    console.error("Error starting Apollo Server:", error);
+  }
+}
+
 connectToMongo();
+connectToApollo();
 
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({ message: "mongokjell" });
