@@ -7,13 +7,19 @@ import {
   updateProductById,
   getTotalStockValue,
   getTotalStockValueByManufacturer,
+  getLowStockProducts,
 } from "../controllers/productController";
 
 const router: Router = Router();
 
 router.get("/products", getAllProducts);
 
-router.get("/products/totalStockValueByManufacturer", getTotalStockValueByManufacturer)
+router.get(
+  "/products/totalStockValueByManufacturer",
+  getTotalStockValueByManufacturer
+);
+
+router.get("/products/lowStock", getLowStockProducts);
 
 router.get("/products/:id", getProductById);
 
