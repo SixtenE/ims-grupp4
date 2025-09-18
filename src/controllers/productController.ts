@@ -90,58 +90,63 @@ export async function deleteProductById(req: Request, res: Response) {
 }
 
 export async function getTotalStockValue(_req: Request, res: Response) {
-    try {
-      const pipeline = [
-        {
-          $project: {
-            totalValue: { $multiply: ["$price", "$amountInStock"]}
-          },
-          $group: {
-            _id: null,
-            totalStockValue: { $sum: "$totalValue"}
-          }
-        }
-      ]
-      const products = await Product.aggregate(pipeline)
-      res.status(200).json(products);
-
-    } catch (error) {
-      res
+  try {
+    const pipeline = [
+      {
+        $project: {
+          totalValue: { $multiply: ["$price", "$amountInStock"] },
+        },
+        $group: {
+          _id: null,
+          totalStockValue: { $sum: "$totalValue" },
+        },
+      },
+    ];
+    const products = await Product.aggregate(pipeline);
+    res.status(200).json(products);
+  } catch (error) {
+    res
       .status(500)
       .json({ error: "Failed fetch total stock value", err: error });
-    }
-  
+  }
 }
 
 export async function getTotalStockValueByManufacturer(
   _req: Request,
   res: Response
-) {try {
-
-const pipeline = [
-  {
-    $lookup: {
-      from: "manufacturers",
-      localField: "manufacturer",
-      foreignField: "_id",
-      as: "manufacturer"
-    },
-  },
-  {
-    $unwind: "$manufacturer",
-  },
-  {
-    $group: {
-      _id: "$manufacturer",
-      totalStockValue: { $sum: {$multiply: ["$price", "$amountInStock"]}}
-    }
+) {
+  try {
+    const pipeline = [
+      {
+        $lookup: {
+          from: "manufacturers",
+          localField: "manufacturer",
+          foreignField: "_id",
+          as: "manufacturer",
+        },
+      },
+      {
+        $unwind: "$manufacturer",
+      },
+      {
+        $group: {
+          _id: "$manufacturer",
+          totalStockValue: {
+            $sum: { $multiply: ["$price", "$amountInStock"] },
+          },
+        },
+      },
+    ];
+    const products = await Product.aggregate(pipeline);
+    res.status(200).json(products);
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        error: "Failed fetch total stock value by manufacturer",
+        err: error,
+      });
   }
-]
-const products = await Product.aggregate(pipeline)
-res.status(200).json(products);
-} catch (error) {
-  
-}
 }
 
 export async function getLowStockProducts(_req: Request, res: Response) {
