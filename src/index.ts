@@ -17,6 +17,7 @@ app.use(express.json());
 //GraphQL setup
 const apollo = new ApolloServer({ typeDefs, resolvers });
 connectToApollo().then(() => {
+  console.log("Connected to Apollo Server");
   app.use("/graphql", expressMiddleware(apollo));
 });
 
