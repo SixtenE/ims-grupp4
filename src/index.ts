@@ -11,7 +11,7 @@ app.use(express.json());
 
 async function connectToMongo() {
   try {
-    await mongoose.connect(String(process.env["MONGODB_URI"]), {
+    await mongoose.connect(String(process.env["DATABASE_URL"]), {
       dbName: "ims",
     });
     console.log("Connected to MongoDB");
