@@ -10,7 +10,7 @@ const productModel = mongoose.model(
     category: { type: String, required: true },
     manufacturer: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      required: false,
       ref: "Manufacturer",
     },
     amountInStock: { type: Number, required: true },
