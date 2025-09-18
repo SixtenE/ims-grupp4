@@ -133,11 +133,9 @@ const pipeline = [
   {
     $group: {
       _id: "$manufacturer",
-      totalStockValue: { $sum: "$totalValue"}
+      totalStockValue: { $sum: {$multiply: ["$price", "$amountInStock"]}}
     }
   }
-
-  //Skapa project
 ]
 const products = await Product.aggregate(pipeline)
 res.status(200).json(products);
