@@ -90,7 +90,27 @@ export async function deleteProductById(req: Request, res: Response) {
 }
 
 export async function getTotalStockValue(_req: Request, res: Response) {
-  res.status(200).json({ message: "getTotalStockValue" });
+    try {
+      const pipeline = [
+        {
+          $project: {
+            totalValue: { $multiply: ["$price", "$amountInStock"]}
+          },
+          $group: {
+            _id: null,
+            totalStockValue: { $sum: "$totalValue"}
+          }
+        }
+      ]
+      const products = await Product.aggregate(pipeline)
+      res.status(200).json(products);
+
+    } catch (error) {
+      res
+      .status(500)
+      .json({ error: "Failed fetch total stock value", err: error });
+    }
+  
 }
 
 export async function getTotalStockValueByManufacturer(
