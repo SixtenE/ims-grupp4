@@ -11,4 +11,9 @@ describe("test root endpoint", () => {
     };
     expect(response.body).toEqual(expectedResponse);
   });
+  it("should return all products", async () => {
+    const response = await request(app).get("/api/products");
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
 });
