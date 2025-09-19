@@ -27,6 +27,12 @@ export const typeDefs = /* GraphQL */ `
     phone: String!
   }
 
+  type StockValueByManufacturer {
+    _id: ID!
+    manufacturer: Manufacturer!
+    totalStockValue: Float!
+  }
+
   input ContactInput {
     name: String!
     email: String!
@@ -57,7 +63,7 @@ export const typeDefs = /* GraphQL */ `
     products: [Product!]!
     product(id: ID!): Product!
     totalStockValue: Float!
-    totalStockValueByManufacturer: Float!
+    totalStockValueByManufacturer: [StockValueByManufacturer!]!
   }
 
   type Mutation {

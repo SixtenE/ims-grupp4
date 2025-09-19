@@ -80,37 +80,39 @@ export const resolvers = {
         );
       }
     },
-    // totalStockValueByManufacturer: async () => {
-    //   try {
-    //     const pipeline = [
-    //       {
-    //         $lookup: {
-    //           from: "manufacturers",
-    //           localField: "manufacturer",
-    //           foreignField: "_id",
-    //           as: "manufacturer",
-    //         },
-    //       },
-    //       {
-    //         $unwind: "$manifacturer",
-    //       },
-    //       {
-    //         $group: {
-    //           _id: "$manifacturer",
-    //           total: { $sum: { $multiply: ["$amountInStock", "$price"] } },
-    //         },
-    //       },
-    //     ];
-    //     const result: { _id: string; total: number }[] =
-    //       await Product.aggregate(pipeline);
+    totalStockValueByManufacturer: async () => {
+      try {
+        const pipeline = [
+          {
+            $lookup: {
+              from: "manufacturers",
+              localField: "manufacturer",
+              foreignField: "_id",
+              as: "manufacturer",
+            },
+          },
+          {
+            $unwind: "$manufacturer",
+          },
+          {
+            $group: {
+              _id: "$manufacturer._id",
+              manufacturer: { $first: "$manufacturer" },
+              totalStockValue: {
+                $sum: { $multiply: ["$price", "$amountInStock"] },
+              },
+            },
+          },
+        ];
+        const result = await Product.aggregate(pipeline);
 
-    //     return result;
-    //   } catch (err) {
-    //     throw new Error(
-    //       "Failed to fetch total stock value" + (err as Error).message
-    //     );
-    //   }
-    // },
+        return result;
+      } catch (err) {
+        throw new Error(
+          "Failed to fetch total stock value" + (err as Error).message
+        );
+      }
+    },
   },
 
   Mutation: {
