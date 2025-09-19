@@ -117,24 +117,22 @@ export const resolvers = {
 
   Mutation: {
     addProduct: async (_p: never, { input }: { input: ProductInput }) => {
+      const { manufacturer: manufacturerInput, ...productData } = input;
+
       try {
         let manufacturerId: string | undefined;
 
-        if (input.manufacturer && input.manufacturerId) {
+        if (manufacturerInput && input.manufacturerId) {
           throw new Error(
             "You cannot provide both manufacturer and manufacturerId. Choose one."
           );
         }
 
-        if (input.manufacturer) {
-          const contact = await Contact.create(input.manufacturer.contact);
+        if (manufacturerInput) {
+          const contact = await Contact.create(manufacturerInput.contact);
 
           const manufacturer = await Manufacturer.create({
-            name: input.manufacturer.name,
-            country: input.manufacturer.country,
-            website: input.manufacturer.website,
-            description: input.manufacturer.description,
-            address: input.manufacturer.address,
+            ...manufacturerInput,
             contact: contact._id,
           });
 
@@ -152,12 +150,7 @@ export const resolvers = {
         }
 
         const product = await Product.create({
-          name: input.name,
-          sku: input.sku,
-          description: input.description,
-          price: input.price,
-          category: input.category,
-          amountInStock: input.amountInStock,
+          ...productData,
           manufacturer: manufacturerId,
         });
 
