@@ -10,7 +10,7 @@ const manufacturerModel = mongoose.model(
     address: { type: String, required: false },
     contact: {
       type: mongoose.Schema.Types.ObjectId,
-      required: false,
+      required: true,
       ref: "Contact",
     },
   })
