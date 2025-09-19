@@ -122,6 +122,8 @@ export const resolvers = {
       try {
         let manufacturerId: string | undefined;
 
+        //TODO - Felhantering för om namnet på en manufacturer redan finns
+
         if (manufacturerInput && input.manufacturerId) {
           throw new Error(
             "You cannot provide both manufacturer and manufacturerId. Choose one."
