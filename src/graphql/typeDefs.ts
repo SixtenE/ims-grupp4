@@ -1,9 +1,4 @@
 export const typeDefs = /* GraphQL */ `
-  type Query {
-    products: [Product!]!
-    product(id: ID!): Product!
-  }
-
   type Product {
     _id: ID!
     name: String!
@@ -55,6 +50,12 @@ export const typeDefs = /* GraphQL */ `
     description: String!
     address: String!
     contact: ContactInput!
+  }
+
+  type Query {
+    products: [Product!]!
+    product(id: ID!): Product!
+    totalStockValue: Float!
   }
 
   type Mutation {

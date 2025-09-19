@@ -50,6 +50,27 @@ export const resolvers = {
         throw new Error("Failed to fetch product:" + (err as Error).message);
       }
     },
+    totalStockValue: async () => {
+      try {
+        const pipeline = [
+          {
+            $group: {
+              _id: null,
+              total: { $sum: { $multiply: ["$amountInStock", "$price"] } },
+            },
+          },
+        ];
+
+        const result: { _id: null; total: number }[] = await Product.aggregate(
+          pipeline
+        );
+        return result[0]?.total || 0;
+      } catch (err) {
+        throw new Error(
+          "Failed to fetch total stock value" + (err as Error).message
+        );
+      }
+    },
   },
 
   Mutation: {
