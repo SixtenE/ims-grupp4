@@ -29,7 +29,7 @@ export async function seedDatabase(_req: Request, res: Response) {
   );
 
   await Product.insertMany(
-    Array.from({ length: 10 }).map(() => ({
+    Array.from({ length: 1000 }).map(() => ({
       name: faker.commerce.productName(),
       price: faker.commerce.price(),
       manufacturer: faker.helpers.arrayElement(manufacturers)._id,
