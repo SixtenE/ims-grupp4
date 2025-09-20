@@ -53,7 +53,7 @@ describe("test GraphQL mutations", () => {
           price: 19.99,
           category: "Testing",
           amountInStock: 100,
-          manufacturerId: "68ce92d9ac7d8f8455134a54",
+          manufacturerId: "${validManufacturerId}",
         }){
           _id
         }
