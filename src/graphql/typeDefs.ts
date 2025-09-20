@@ -68,5 +68,6 @@ export const typeDefs = /* GraphQL */ `
 
   type Mutation {
     addProduct(input: ProductInput!): Product!
+    deleteProductById(id: ID!): Product!
   }
 `;
