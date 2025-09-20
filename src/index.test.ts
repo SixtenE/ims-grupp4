@@ -36,3 +36,35 @@ describe("test graphql endpoint", () => {
     expect(response.body.data.products[0]).not.toHaveProperty("sku");
   });
 });
+
+describe("test GraphQL mutations", () => {
+  it("should add a new product", async () => {
+    const validManufacturerId = "68ce92d9ac7d8f8455134a54";
+
+    const testProductName = "Test Product " + Math.floor(Math.random() * 1000);
+    const testProductSku = "TESTSKU" + Math.floor(Math.random() * 1000);
+
+    const mutation = `
+      mutation {
+        addProduct(input: {
+          name: "${testProductName}",
+          sku: "${testProductSku}",
+          description: "A product for testing",
+          price: 19.99,
+          category: "Testing",
+          amountInStock: 100,
+          manufacturerId: "${validManufacturerId}",
+        }){
+          _id
+        }
+      }
+    `;
+
+    const response = await request(app)
+      .post("/graphql")
+      .send({ query: mutation });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.addProduct).toHaveProperty("_id");
+  });
+});

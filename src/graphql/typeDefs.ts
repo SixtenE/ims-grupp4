@@ -33,12 +33,6 @@ export const typeDefs = /* GraphQL */ `
     totalStockValue: Float!
   }
 
-  input ContactInput {
-    name: String!
-    email: String!
-    phone: String!
-  }
-
   input ProductInput {
     name: String!
     sku: String!
@@ -46,17 +40,7 @@ export const typeDefs = /* GraphQL */ `
     price: Float!
     category: String!
     amountInStock: Int!
-    manufacturer: ManufacturerInput
     manufacturerId: ID
-  }
-
-  input ManufacturerInput {
-    name: String!
-    country: String!
-    website: String!
-    description: String!
-    address: String!
-    contact: ContactInput!
   }
 
   type Query {
@@ -68,5 +52,6 @@ export const typeDefs = /* GraphQL */ `
 
   type Mutation {
     addProduct(input: ProductInput!): Product!
+    deleteProductById(id: ID!): Product!
   }
 `;

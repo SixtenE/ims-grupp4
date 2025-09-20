@@ -166,5 +166,18 @@ export const resolvers = {
         throw new Error("Failed to add product:" + (err as Error).message);
       }
     },
+    deleteProductById: async (_p: never, { id }: { id: string }) => {
+      if (!mongoose.isValidObjectId(id)) {
+        throw new Error("Not valid objectId");
+      }
+
+      try {
+        const product = await Product.findByIdAndDelete(id);
+
+        return product;
+      } catch (error) {
+        throw new Error("Failed to delete product:" + (error as Error).message);
+      }
+    },
   },
 };
