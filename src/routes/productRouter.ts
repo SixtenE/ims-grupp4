@@ -9,7 +9,7 @@ import {
   getTotalStockValueByManufacturer,
   getLowStockProducts,
   getCriticalStockProducts,
-} from "../controllers/productController";
+} from "../controllers/productController.js";
 
 const router: Router = Router();
 

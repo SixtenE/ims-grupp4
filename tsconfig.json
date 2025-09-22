@@ -3,6 +3,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "esnext",
     "types": [],
 
@@ -12,6 +13,8 @@
 
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
+
+    "esModuleInterop": true,
 
     "noImplicitReturns": true,
     "noImplicitOverride": true,

@@ -1,12 +1,12 @@
 import express, { Response, Request, Application } from "express";
 import "dotenv/config";
-import productRouter from "./routes/productRouter";
-import manufacturerRouter from "./routes/manufacturerRouter";
+import productRouter from "./routes/productRouter.js";
+import manufacturerRouter from "./routes/manufacturerRouter.js";
 import mongoose from "mongoose";
-import { seedDatabase } from "./utils/seed";
+import { seedDatabase } from "./utils/seed.js";
 import { ApolloServer } from "@apollo/server";
-import { resolvers } from "./graphql/resolvers";
-import { typeDefs } from "./graphql/typeDefs";
+import { resolvers } from "./graphql/resolvers.js";
+import { typeDefs } from "./graphql/typeDefs.js";
 import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
 
@@ -27,6 +27,10 @@ async function connectToMongo() {
   try {
     await mongoose.connect(String(process.env["DATABASE_URL"]), {
       dbName: "ims",
+      // Hanna behöver dessa för att kunna starta server:
+      // serverSelectionTimeoutMS: 5000,
+      // tls: true,
+      // tlsAllowInvalidCertificates: true,
     });
     console.log("Connected to MongoDB");
   } catch (error) {
