@@ -4,28 +4,6 @@ import mongoose from "mongoose";
 import Contact from "../models/Contact.js";
 import Manufacturer from "../models/Manufacturer.js";
 
-// interface AddProductBody {
-//   name: string;
-//   sku: string;
-//   description: string;
-//   price: number;
-//   category: string;
-//   amountInStock: number;
-//   manufacturer?: {
-//     name: string;
-//     country: string;
-//     website: string;
-//     description: string;
-//     address: string;
-//     contact: {
-//       name: string;
-//       email: string;
-//       phone: string;
-//     };
-//   };
-//   manufacturerId?: string;
-// }
-
 export async function getAllProducts(_req: Request, res: Response) {
   try {
     const products = await Product.find();
@@ -99,7 +77,6 @@ export async function addProduct(req: Request, res: Response) {
     });
 
     return res.status(201).json(product);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error) {
     return res.status(500).json({ error: "Failed to add product", err: error });
   }
