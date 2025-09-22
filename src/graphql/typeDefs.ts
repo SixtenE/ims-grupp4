@@ -48,6 +48,7 @@ export const typeDefs = /* GraphQL */ `
     product(id: ID!): Product!
     totalStockValue: Float!
     totalStockValueByManufacturer: [StockValueByManufacturer!]!
+    manufacturers: [Manufacturer!]!
   }
 
   type Mutation {
