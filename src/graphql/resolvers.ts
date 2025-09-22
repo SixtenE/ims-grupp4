@@ -113,6 +113,17 @@ export const resolvers = {
         );
       }
     },
+    manufacturers: async () => {
+      try {
+        return await Manufacturer.find().populate({
+          path: "contact",
+        });
+      } catch (err) {
+        throw new Error(
+          "Failed to fetch manufacturers:" + (err as Error).message
+        );
+      }
+    },
     lowStockProducts: async (_p: never, {threshold = 10}: {threshold: number}) => {
       try {
         return await Product.find({ amountInStock: { $lt: threshold }}); 

@@ -48,6 +48,7 @@ export const typeDefs = /* GraphQL */ `
     product(id: ID!): Product!
     totalStockValue: Float!
     totalStockValueByManufacturer: [StockValueByManufacturer!]!
+    manufacturers: [Manufacturer!]!
     lowStockProducts(threshold: Int = 10): [Product!]!
     criticalStockProducts(threshold: Int = 5): [Product!]! 
   }
