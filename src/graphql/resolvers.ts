@@ -113,6 +113,33 @@ export const resolvers = {
         );
       }
     },
+    lowStockProducts: async (_p: never, {threshold = 10}: {threshold: number}) => {
+      try {
+        return await Product.find({ amountInStock: { $lt: threshold }}); 
+      } catch (err) {
+          throw new Error(
+            "Failed to fetch low stock products" + (err as Error).message
+        );
+      }
+    },
+    criticalStockProducts: async (_p:never, { threshold = 5}: {threshold: number}) => {
+      try {
+          const criticalStock = await Product.find({ amountInStock: { $lt: threshold }})
+            .populate({
+              path: "manufacturer",
+              select: "name contact",
+              populate: {
+                path: "contact",
+                select: "name email phone"
+              }
+            });
+            return criticalStock;
+      } catch (err) {
+        throw new Error(
+            "Failed to fetch critical stock products" + (err as Error).message
+        )
+      }
+    }
   },
 
   Mutation: {

@@ -27,6 +27,10 @@ async function connectToMongo() {
   try {
     await mongoose.connect(String(process.env["DATABASE_URL"]), {
       dbName: "ims",
+      // Hanna behöver dessa för att kunna starta server:
+      // serverSelectionTimeoutMS: 5000,
+      // tls: true,
+      // tlsAllowInvalidCertificates: true,
     });
     console.log("Connected to MongoDB");
   } catch (error) {
