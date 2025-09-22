@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Manufacturer from "../models/Manufacturer";
+import Manufacturer from "../models/Manufacturer.js";
 
 export async function getAllManufacturers(_req: Request, res: Response) {
   try {

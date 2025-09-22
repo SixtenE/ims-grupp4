@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import Product from "../models/Product";
-import Manufacturer from "../models/Manufacturer";
-import Contact from "../models/Contact";
+import Product from "../models/Product.js";
+import Manufacturer from "../models/Manufacturer.js";
+import Contact from "../models/Contact.js";
 
 type ProductInput = {
   name: string;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import { app } from ".";
+import { app } from "./index.js";
 
 describe("test rest endpoint", () => {
   it("should return all products", async () => {
