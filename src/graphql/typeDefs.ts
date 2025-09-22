@@ -48,6 +48,8 @@ export const typeDefs = /* GraphQL */ `
     product(id: ID!): Product!
     totalStockValue: Float!
     totalStockValueByManufacturer: [StockValueByManufacturer!]!
+    lowStockProducts(threshold: Int = 10): [Product!]!
+    criticalStockProducts(threshold: Int = 5): [Product!]! 
   }
 
   type Mutation {
