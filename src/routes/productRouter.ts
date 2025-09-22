@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getAllProducts,
   getProductById,
-  createProduct,
+  addProduct,
   deleteProductById,
   updateProductById,
   getTotalStockValue,
@@ -13,7 +13,7 @@ import {
 
 const router: Router = Router();
 
-router.post("/products", createProduct);
+router.post("/products", addProduct);
 
 router.get("/products", getAllProducts);
 

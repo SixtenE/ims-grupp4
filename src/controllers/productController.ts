@@ -1,6 +1,30 @@
 import { Request, Response } from "express";
 import Product from "../models/Product.js";
 import mongoose from "mongoose";
+import Contact from "../models/Contact.js";
+import Manufacturer from "../models/Manufacturer.js";
+
+// interface AddProductBody {
+//   name: string;
+//   sku: string;
+//   description: string;
+//   price: number;
+//   category: string;
+//   amountInStock: number;
+//   manufacturer?: {
+//     name: string;
+//     country: string;
+//     website: string;
+//     description: string;
+//     address: string;
+//     contact: {
+//       name: string;
+//       email: string;
+//       phone: string;
+//     };
+//   };
+//   manufacturerId?: string;
+// }
 
 export async function getAllProducts(_req: Request, res: Response) {
   try {
@@ -28,17 +52,56 @@ export async function getProductById(req: Request, res: Response) {
   }
 }
 
-export async function createProduct(req: Request, res: Response) {
+export async function addProduct(req: Request, res: Response) {
+  const { manufacturer, manufacturerId, ...productData } = req.body;
+
+  //TODO - Felhantering för om namnet på en manufacturer eller SKU redan finns
+
   try {
-    const product = await Product.create(req.body);
-    res.status(201).json(product);
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    if (err.code === 11000) {
-      res.status(409).json({ error: "Sku already exist" });
-      return;
+    let finalManufacturerId: string | undefined;
+
+    if (manufacturer && manufacturerId) {
+      return res.status(400).json({
+        error:
+          "You cannot provide both manufacturer and manufacturerId. Choose one.",
+      });
     }
-    res.status(500).json({ error: "Failed to create product", err });
+
+    if (manufacturer) {
+      const contact = await Contact.create(manufacturer.contact);
+
+      const newManufacturer = await Manufacturer.create({
+        ...manufacturer,
+        contact: contact._id,
+      });
+
+      finalManufacturerId = newManufacturer._id.toString();
+    } else if (manufacturerId) {
+      if (!mongoose.isValidObjectId(manufacturerId)) {
+        return res.status(400).json({ error: "Invalid manufacturerId" });
+      }
+
+      finalManufacturerId = manufacturerId;
+    } else {
+      return res.status(400).json({
+        error: "You must provide either manufacturer object or manufacturerId",
+      });
+    }
+
+    const product = await Product.create({
+      ...productData,
+      manufacturer: finalManufacturerId,
+    });
+
+    await product.populate({
+      path: "manufacturer",
+      populate: { path: "contact" },
+    });
+
+    return res.status(201).json(product);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to add product", err: error });
   }
 }
 
