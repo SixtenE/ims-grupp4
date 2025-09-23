@@ -33,8 +33,6 @@ export async function getProductById(req: Request, res: Response) {
 export async function addProduct(req: Request, res: Response) {
   const { manufacturer, manufacturerId, ...productData } = req.body;
 
-  //TODO - Felhantering för om namnet på en manufacturer eller SKU redan finns
-
   try {
     let finalManufacturerId: string | undefined;
 

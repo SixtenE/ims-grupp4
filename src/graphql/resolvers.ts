@@ -178,8 +178,6 @@ export const resolvers = {
       try {
         let finalManufacturerId: string | undefined;
 
-        //TODO - Felhantering för om namnet på en manufacturer eller SKU redan finns
-
         if (manufacturerInput && input.manufacturerId) {
           throw new Error(
             "You cannot provide both manufacturer and manufacturerId. Choose one."
@@ -222,17 +220,20 @@ export const resolvers = {
         throw new Error("Failed to add product:" + (err as Error).message);
       }
     },
-    updateProduct: async (_p:never, { id, input }: { id: string, input: UpdateProductInput}) => {
+    updateProduct: async (
+      _p: never,
+      { id, input }: { id: string; input: UpdateProductInput }
+    ) => {
       if (!mongoose.isValidObjectId(id)) {
         throw new Error("Not valid objectId");
       }
       try {
-          const updatedProduct = await Product.findByIdAndUpdate(id, input, {
-            new: true,
-            runValidators: true,
-          })
-          if(!updatedProduct) throw new Error("Product not found")
-          return updatedProduct;
+        const updatedProduct = await Product.findByIdAndUpdate(id, input, {
+          new: true,
+          runValidators: true,
+        });
+        if (!updatedProduct) throw new Error("Product not found");
+        return updatedProduct;
       } catch (error) {
         throw new Error("Failed to update product:" + (error as Error).message);
       }
@@ -244,7 +245,7 @@ export const resolvers = {
 
       try {
         const product = await Product.findByIdAndDelete(id);
-        if(!product) throw new Error("Product not found")
+        if (!product) throw new Error("Product not found");
         return product;
       } catch (error) {
         throw new Error("Failed to delete product:" + (error as Error).message);
