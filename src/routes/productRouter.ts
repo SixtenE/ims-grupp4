@@ -17,10 +17,10 @@ router.post("/products", addProduct);
 
 router.get("/products", getAllProducts);
 
-router.get("/products/totalStockValue", getTotalStockValue);
+router.get("/products/total-stock-value", getTotalStockValue);
 
 router.get(
-  "/products/totalStockValueByManufacturer",
+  "/products/total-stock-value-by-manufacturer",
   getTotalStockValueByManufacturer
 );
 

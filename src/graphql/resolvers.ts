@@ -198,6 +198,13 @@ export const resolvers = {
             throw new Error("Id is not valid");
           }
 
+          const existingManufacturer = await Manufacturer.findById(
+            input.manufacturerId
+          );
+          if (!existingManufacturer) {
+            throw new Error("Manufacturer not found");
+          }
+
           finalManufacturerId = input.manufacturerId;
         } else {
           throw new Error(
