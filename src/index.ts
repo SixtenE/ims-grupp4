@@ -57,6 +57,8 @@ app.use("/api", manufacturerRouter);
 
 app.post("/seed", seedDatabase);
 
+app.use("/", express.static("public"));
+
 const server = app.listen(PORT, "::", () => {
   console.log(`Server is running at ${JSON.stringify(server.address())}`);
 });
