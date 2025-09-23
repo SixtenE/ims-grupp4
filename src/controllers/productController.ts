@@ -6,7 +6,10 @@ import Manufacturer from "../models/Manufacturer.js";
 
 export async function getAllProducts(_req: Request, res: Response) {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate({
+      path: "manufacturer",
+      populate: { path: "contact" },
+    });
     res.status(200).json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products", err });
@@ -20,7 +23,10 @@ export async function getProductById(req: Request, res: Response) {
     return res.status(400).json({ error: "Not valid objectId" });
 
   try {
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).populate({
+      path: "manufacturer",
+      populate: { path: "contact" },
+    });
 
     if (!product) return res.status(404).json({ error: "Id no valid" });
 
@@ -55,6 +61,11 @@ export async function addProduct(req: Request, res: Response) {
     } else if (manufacturerId) {
       if (!mongoose.isValidObjectId(manufacturerId)) {
         return res.status(400).json({ error: "Invalid manufacturerId" });
+      }
+
+      const existingManufacturer = await Manufacturer.findById(manufacturerId);
+      if (!existingManufacturer) {
+        return res.status(404).json({ error: "Manufacturer not found" });
       }
 
       finalManufacturerId = manufacturerId;
@@ -97,7 +108,9 @@ export async function updateProductById(req: Request, res: Response) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    return res.status(200).json(product);
+    return res
+      .status(200)
+      .json({ message: "Product updated successfully", product });
   } catch (error) {
     return res
       .status(500)
@@ -134,14 +147,16 @@ export async function getTotalStockValue(_req: Request, res: Response) {
         $project: {
           totalValue: { $multiply: ["$price", "$amountInStock"] },
         },
+      },
+      {
         $group: {
           _id: null,
           totalStockValue: { $sum: "$totalValue" },
         },
       },
     ];
-    const products = await Product.aggregate(pipeline);
-    res.status(200).json(products);
+    const result = await Product.aggregate(pipeline);
+    res.status(200).json(result[0].totalStockValue);
   } catch (error) {
     res
       .status(500)
@@ -168,7 +183,8 @@ export async function getTotalStockValueByManufacturer(
       },
       {
         $group: {
-          _id: "$manufacturer",
+          _id: "$manufacturer._id",
+          name: { $first: "$manufacturer.name" },
           totalStockValue: {
             $sum: { $multiply: ["$price", "$amountInStock"] },
           },
@@ -197,45 +213,46 @@ export async function getLowStockProducts(_req: Request, res: Response) {
 
 //Hämta en kompakt lista över produkter med färre än 5 enheter i lager (inkluderar endast tillverkarens/manufacturer samt kontaktens/contact namn, telefon och e-post)
 export async function getCriticalStockProducts(_req: Request, res: Response) {
-  const pipeline = [
-    {
-      $match: { amountInStock: { $lt: 5 } },
-    },
-    {
-      $lookup: {
-        from: "manufacturers",
-        localField: "manufacturer",
-        foreignField: "_id",
-        as: "manufacturer",
-      },
-    },
-    {
-      $unwind: "$manufacturer",
-    },
-
-    {
-      $lookup: {
-        from: "contacts",
-        localField: "manufacturer.contact",
-        foreignField: "_id",
-        as: "contact",
-      },
-    },
-    {
-      $unwind: "$contact",
-    },
-    {
-      $project: {
-        productName: "$name",
-        manufacturerName: "$manufacturer.name",
-        contactName: "$contact.name",
-        contactPhone: "$contact.phone",
-        contactEmail: "$contact.email",
-      },
-    },
-  ];
-
   try {
+    const pipeline = [
+      {
+        $match: { amountInStock: { $lt: 5 } },
+      },
+      {
+        $lookup: {
+          from: "manufacturers",
+          localField: "manufacturer",
+          foreignField: "_id",
+          as: "manufacturer",
+        },
+      },
+      {
+        $unwind: "$manufacturer",
+      },
+
+      {
+        $lookup: {
+          from: "contacts",
+          localField: "manufacturer.contact",
+          foreignField: "_id",
+          as: "contact",
+        },
+      },
+      {
+        $unwind: "$contact",
+      },
+      {
+        $project: {
+          _id: 0,
+          productName: "$name",
+          manufacturerName: "$manufacturer.name",
+          contactName: "$contact.name",
+          contactPhone: "$contact.phone",
+          contactEmail: "$contact.email",
+        },
+      },
+    ];
+
     const products = await Product.aggregate(pipeline);
     res.status(200).json(products);
   } catch (error) {
