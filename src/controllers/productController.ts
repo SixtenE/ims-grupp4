@@ -9,20 +9,29 @@ export async function getAllProducts(req: Request, res: Response) {
   const categoryFilter: string | string[] | undefined = req.query[
     "category"
   ] as string | string[] | undefined;
+
   const priceMinFilter: number | undefined = req.query["priceMin"]
     ? Number(req.query["priceMin"])
     : undefined;
+
   const priceMaxFilter: number | undefined = req.query["priceMax"]
     ? Number(req.query["priceMax"])
     : undefined;
+
   const sort: { [key: string]: mongoose.SortOrder } =
     req.query["sort"] === "priceAsc"
       ? { price: "asc" }
       : req.query["sort"] === "priceDesc"
       ? { price: "desc" }
-      : {};
+      : {
+          name: "asc",
+        };
+
   const searchQuery = req.query["search"] as string | undefined;
+
   const manufacturerId = req.query["manufacturerId"] as string | undefined;
+
+  const limit = req.query["limit"] ? Number(req.query["limit"]) : 1000;
 
   try {
     const products = await Product.find({
@@ -44,7 +53,8 @@ export async function getAllProducts(req: Request, res: Response) {
         path: "manufacturer",
         populate: { path: "contact" },
       })
-      .sort(sort);
+      .sort(sort)
+      .limit(limit);
     res.status(200).json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products", err });
