@@ -4,12 +4,46 @@ import mongoose from "mongoose";
 import Contact from "../models/Contact.js";
 import Manufacturer from "../models/Manufacturer.js";
 
-export async function getAllProducts(_req: Request, res: Response) {
+export async function getAllProducts(req: Request, res: Response) {
+  const categoryFilter: string | string[] | undefined = req.query[
+    "category"
+  ] as string | string[] | undefined;
+  const priceMinFilter: number | undefined = req.query["priceMin"]
+    ? Number(req.query["priceMin"])
+    : undefined;
+  const priceMaxFilter: number | undefined = req.query["priceMax"]
+    ? Number(req.query["priceMax"])
+    : undefined;
+  const sort: { [key: string]: mongoose.SortOrder } =
+    req.query["sort"] === "priceAsc"
+      ? { price: "asc" }
+      : req.query["sort"] === "priceDesc"
+      ? { price: "desc" }
+      : {};
+  const searchQuery = req.query["search"] as string | undefined;
+  const manufacturerId = req.query["manufacturerId"] as string | undefined;
+
   try {
-    const products = await Product.find().populate({
-      path: "manufacturer",
-      populate: { path: "contact" },
-    });
+    const products = await Product.find({
+      ...(categoryFilter ? { category: categoryFilter } : {}),
+      ...(priceMinFilter ? { price: { $gte: priceMinFilter } } : {}),
+      ...(priceMaxFilter ? { price: { $lte: priceMaxFilter } } : {}),
+      ...(searchQuery
+        ? {
+            $or: [
+              { name: { $regex: searchQuery, $options: "i" } },
+              { description: { $regex: searchQuery, $options: "i" } },
+              { sku: { $regex: searchQuery, $options: "i" } },
+            ],
+          }
+        : {}),
+      ...(manufacturerId ? { manufacturer: manufacturerId } : {}),
+    })
+      .populate({
+        path: "manufacturer",
+        populate: { path: "contact" },
+      })
+      .sort(sort);
     res.status(200).json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products", err });
