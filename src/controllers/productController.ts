@@ -6,7 +6,10 @@ import Manufacturer from "../models/Manufacturer.js";
 
 export async function getAllProducts(_req: Request, res: Response) {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate({
+      path: "manufacturer",
+      populate: { path: "contact" },
+    });
     res.status(200).json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products", err });
