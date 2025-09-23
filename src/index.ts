@@ -48,10 +48,6 @@ async function connectToApollo() {
 
 connectToMongo();
 
-app.get("/", (_req: Request, res: Response) => {
-  res.status(200).json({ message: "mongokjell" });
-});
-
 app.use("/api", productRouter);
 app.use("/api", manufacturerRouter);
 
