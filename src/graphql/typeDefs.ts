@@ -41,6 +41,22 @@ export const typeDefs = /* GraphQL */ `
     category: String!
     amountInStock: Int!
     manufacturerId: ID
+    manufacturer: ManufacturerInput
+  }
+
+  input ContactInput {
+    name: String!
+    email: String!
+    phone: String!
+  }
+
+  input ManufacturerInput {
+    name: String!
+    country: String!
+    website: String!
+    description: String!
+    address: String!
+    contact: ContactInput!
   }
 
   input UpdateProductInput {
@@ -60,12 +76,12 @@ export const typeDefs = /* GraphQL */ `
     totalStockValueByManufacturer: [StockValueByManufacturer!]!
     manufacturers: [Manufacturer!]!
     lowStockProducts(threshold: Int = 10): [Product!]!
-    criticalStockProducts(threshold: Int = 5): [Product!]! 
+    criticalStockProducts(threshold: Int = 5): [Product!]!
   }
 
   type Mutation {
     addProduct(input: ProductInput!): Product!
-    updateProduct(id: ID! input: UpdateProductInput!): Product!
+    updateProduct(id: ID!, input: UpdateProductInput!): Product!
     deleteProductById(id: ID!): Product!
   }
 `;
