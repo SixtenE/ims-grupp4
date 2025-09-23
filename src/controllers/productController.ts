@@ -5,6 +5,7 @@ import Contact from "../models/Contact.js";
 import Manufacturer from "../models/Manufacturer.js";
 
 export async function getAllProducts(req: Request, res: Response) {
+  // Copilot skrev denna del
   const categoryFilter: string | string[] | undefined = req.query[
     "category"
   ] as string | string[] | undefined;
@@ -71,6 +72,7 @@ export async function getProductById(req: Request, res: Response) {
 }
 
 export async function addProduct(req: Request, res: Response) {
+  //TODO: Handle error duplicate SKU
   const { manufacturer, manufacturerId, ...productData } = req.body;
 
   try {
