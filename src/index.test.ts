@@ -98,6 +98,7 @@ describe("test rest mutations", () => {
     expect(response.status).toBe(400);
   });
   it("should return 409 for duplicate sku", async () => {
+    //TODO: fix this
     const existingProduct = await productModel.findOne();
     if (!existingProduct) {
       throw new Error("No product found in the database");
@@ -118,6 +119,25 @@ describe("test rest mutations", () => {
       manufacturerId: validManufacturer._id,
     });
     expect(response.status).toBe(409);
+  });
+  it("should return 400 for negative price", async () => {
+    const validManufacturer = await manufacturerModel.findOne();
+    if (!validManufacturer) {
+      throw new Error("No manufacturer found in the database");
+    }
+
+    const response = await request(app)
+      .post("/api/products")
+      .send({
+        name: "Negative Price Product",
+        sku: "NEGPRICE" + Math.floor(Math.random() * 1000),
+        description: "A product with negative price",
+        price: -10.0,
+        category: "Testing",
+        amountInStock: 20,
+        manufacturerId: validManufacturer._id,
+      });
+    expect(response.status).toBe(400);
   });
 });
 
