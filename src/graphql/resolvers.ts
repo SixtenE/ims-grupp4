@@ -124,33 +124,40 @@ export const resolvers = {
         );
       }
     },
-    lowStockProducts: async (_p: never, {threshold = 10}: {threshold: number}) => {
+    lowStockProducts: async (
+      _p: never,
+      { threshold = 10 }: { threshold: number }
+    ) => {
       try {
-        return await Product.find({ amountInStock: { $lt: threshold }}); 
+        return await Product.find({ amountInStock: { $lt: threshold } });
       } catch (err) {
-          throw new Error(
-            "Failed to fetch low stock products" + (err as Error).message
+        throw new Error(
+          "Failed to fetch low stock products" + (err as Error).message
         );
       }
     },
-    criticalStockProducts: async (_p:never, { threshold = 5}: {threshold: number}) => {
+    criticalStockProducts: async (
+      _p: never,
+      { threshold = 5 }: { threshold: number }
+    ) => {
       try {
-          const criticalStock = await Product.find({ amountInStock: { $lt: threshold }})
-            .populate({
-              path: "manufacturer",
-              select: "name contact",
-              populate: {
-                path: "contact",
-                select: "name email phone"
-              }
-            });
-            return criticalStock;
+        const criticalStock = await Product.find({
+          amountInStock: { $lt: threshold },
+        }).populate({
+          path: "manufacturer",
+          select: "name contact",
+          populate: {
+            path: "contact",
+            select: "name email phone",
+          },
+        });
+        return criticalStock;
       } catch (err) {
         throw new Error(
-            "Failed to fetch critical stock products" + (err as Error).message
-        )
+          "Failed to fetch critical stock products" + (err as Error).message
+        );
       }
-    }
+    },
   },
 
   Mutation: {
@@ -158,9 +165,9 @@ export const resolvers = {
       const { manufacturer: manufacturerInput, ...productData } = input;
 
       try {
-        let manufacturerId: string | undefined;
+        let finalManufacturerId: string | undefined;
 
-        //TODO - Felhantering för om namnet på en manufacturer redan finns
+        //TODO - Felhantering för om namnet på en manufacturer eller SKU redan finns
 
         if (manufacturerInput && input.manufacturerId) {
           throw new Error(
@@ -171,18 +178,18 @@ export const resolvers = {
         if (manufacturerInput) {
           const contact = await Contact.create(manufacturerInput.contact);
 
-          const manufacturer = await Manufacturer.create({
+          const newManufacturer = await Manufacturer.create({
             ...manufacturerInput,
             contact: contact._id,
           });
 
-          manufacturerId = manufacturer._id.toString();
+          finalManufacturerId = newManufacturer._id.toString();
         } else if (input.manufacturerId) {
           if (!mongoose.isValidObjectId(input.manufacturerId)) {
             throw new Error("Id is not valid");
           }
 
-          manufacturerId = input.manufacturerId;
+          finalManufacturerId = input.manufacturerId;
         } else {
           throw new Error(
             "You must provide either a manufacturer or manufacturerId"
@@ -191,7 +198,7 @@ export const resolvers = {
 
         const product = await Product.create({
           ...productData,
-          manufacturer: manufacturerId,
+          manufacturer: finalManufacturerId,
         });
 
         await product.populate({
