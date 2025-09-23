@@ -4,6 +4,19 @@ import Contact from "../models/Contact.js";
 import { faker } from "@faker-js/faker";
 import { Request, Response } from "express";
 
+const CATEGORIES = [
+  "Electronics",
+  "Books",
+  "Clothing",
+  "Food",
+  "Sports",
+  "Toys",
+  "Beauty",
+  "Automotive",
+  "Garden",
+  "Health",
+];
+
 export async function seedDatabase(_req: Request, res: Response) {
   await Contact.deleteMany({});
   await Manufacturer.deleteMany({});
@@ -34,7 +47,7 @@ export async function seedDatabase(_req: Request, res: Response) {
       price: faker.commerce.price(),
       manufacturer: faker.helpers.arrayElement(manufacturers)._id,
       amountInStock: faker.number.int({ min: 0, max: 100 }),
-      category: faker.commerce.department(),
+      category: faker.helpers.arrayElement(CATEGORIES),
       description: faker.commerce.productDescription(),
       sku: faker.string.alphanumeric(8).toUpperCase(),
     }))
