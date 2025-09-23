@@ -1,4 +1,4 @@
-import express, { Response, Request, Application } from "express";
+import express, { Application } from "express";
 import "dotenv/config";
 import productRouter from "./routes/productRouter.js";
 import manufacturerRouter from "./routes/manufacturerRouter.js";
