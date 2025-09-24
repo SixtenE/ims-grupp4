@@ -235,7 +235,10 @@ export const resolvers = {
       }
 
       try {
-        const product = await Product.findByIdAndDelete(id);
+        const product = await Product.findByIdAndDelete(id).populate({
+          path: "manufacturer",
+          populate: { path: "contact" },
+        });
         if (!product) throw new Error("Product not found");
         return product;
       } catch (error) {
