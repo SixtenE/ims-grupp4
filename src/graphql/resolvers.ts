@@ -224,30 +224,55 @@ export const resolvers = {
       }
     },
 
-    updateProduct: async (_p: never, { id, input }: { id: string; input: UpdateProductInput }) => {
-      if (!mongoose.isValidObjectId(id)) {
-        throw new Error("Not valid objectId");
-      }
+    updateProduct: async (
+  _p: never,
+  { id, input }: { id: string; input: UpdateProductInput }
+) => {
+  if (!mongoose.isValidObjectId(id)) {
+    throw new Error("Not valid objectId");
+  }
 
-      // Validera med Zod
-      const parseResult = updateProductSchema.safeParse(input);
-      if (!parseResult.success) {
-        throw new Error("Validation error: " + JSON.stringify(parseResult.error.flatten()));
-      }
+  // Validera med Zod
+  const parseResult = updateProductSchema.safeParse(input);
+  if (!parseResult.success) {
+    throw new Error(
+      "Validation error: " +
+        JSON.stringify(parseResult.error.flatten())
+    );
+  }
 
-      const validatedData = parseResult.data;
+  const validatedData = parseResult.data;
 
-      try {
-        const updatedProduct = await Product.findByIdAndUpdate(id, validatedData, {
-          new: true,
-          runValidators: true,
-        });
-        if (!updatedProduct) throw new Error("Product not found");
-        return updatedProduct;
-      } catch (error) {
-        throw new Error("Failed to update product:" + (error as Error).message);
+  if (validatedData.manufacturerId) {
+    if (!mongoose.isValidObjectId(validatedData.manufacturerId)) {
+      throw new Error("Invalid manufacturerId");
+    }
+    const existingManufacturer = await Manufacturer.findById(
+      validatedData.manufacturerId
+    );
+    if (!existingManufacturer) {
+      throw new Error("Manufacturer not found");
+    }
+  }
+
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      validatedData,
+      {
+        new: true,
+        runValidators: true,
       }
-    },
+    );
+    if (!updatedProduct) throw new Error("Product not found");
+    return updatedProduct;
+  } catch (error) {
+    throw new Error(
+      "Failed to update product:" + (error as Error).message
+    );
+  }
+},
+
     deleteProductById: async (_p: never, { id }: { id: string }) => {
       if (!mongoose.isValidObjectId(id)) {
         throw new Error("Not valid objectId");

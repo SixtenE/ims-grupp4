@@ -195,11 +195,27 @@ export async function updateProductById(req: Request, res: Response) {
 
   const validatedData = parseResult.data;
 
+  if (validatedData.manufacturerId) {
+    if (!mongoose.isValidObjectId(validatedData.manufacturerId)) {
+      return res.status(400).json({ error: "Invalid manufacturerId" });
+    }
+    const existingManufacturer = await Manufacturer.findById(
+      validatedData.manufacturerId
+    );
+    if (!existingManufacturer) {
+      return res.status(404).json({ error: "Manufacturer not found" });
+    }
+  }
+
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(id, validatedData, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      validatedData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedProduct) {
       return res.status(404).json({ error: "Product not found" });
@@ -216,6 +232,7 @@ export async function updateProductById(req: Request, res: Response) {
     });
   }
 }
+
 
 export async function deleteProductById(req: Request, res: Response) {
   const { id } = req.params;
