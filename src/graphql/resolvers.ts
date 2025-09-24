@@ -164,7 +164,7 @@ export const resolvers = {
           finalManufacturerId = newManufacturer._id.toString();
         } else if (input.manufacturerId) {
           if (!mongoose.isValidObjectId(input.manufacturerId)) {
-            throw new Error("Id is not valid");
+            throw new Error("Invalid manufacturerId");
           }
 
           const existingManufacturer = await Manufacturer.findById(
@@ -186,7 +186,7 @@ export const resolvers = {
           sku: productData.sku,
         }).session(session);
         if (existingProduct) {
-          throw new Error("A product with this SKU already exists");
+          throw new Error("Product with this sku already exists");
         }
 
         const product = new Product({
@@ -197,7 +197,6 @@ export const resolvers = {
         await product.save({ session });
 
         await session.commitTransaction();
-        session.endSession();
 
         await product.populate({
           path: "manufacturer",
@@ -207,8 +206,9 @@ export const resolvers = {
         return product;
       } catch (err) {
         await session.abortTransaction();
-        session.endSession();
         throw new Error("Failed to add product:" + (err as Error).message);
+      } finally {
+        session.endSession();
       }
     },
     updateProduct: async (
@@ -235,7 +235,10 @@ export const resolvers = {
       }
 
       try {
-        const product = await Product.findByIdAndDelete(id);
+        const product = await Product.findByIdAndDelete(id).populate({
+          path: "manufacturer",
+          populate: { path: "contact" },
+        });
         if (!product) throw new Error("Product not found");
         return product;
       } catch (error) {
