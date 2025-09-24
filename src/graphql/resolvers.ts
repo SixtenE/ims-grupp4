@@ -2,43 +2,7 @@ import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Manufacturer from "../models/Manufacturer.js";
 import Contact from "../models/Contact.js";
-
-type ProductInput = {
-  name: string;
-  sku: string;
-  description: string;
-  price: number;
-  category: string;
-  amountInStock: number;
-  manufacturer?: ManufacturerInput;
-  manufacturerId?: string;
-};
-
-type ManufacturerInput = {
-  name: string;
-  country: string;
-  website: string;
-  description: string;
-  address: string;
-  contact: ContactInput;
-};
-
-type ContactInput = {
-  name: string;
-  email: string;
-  phone: string;
-};
-
-type UpdateProductInput = {
-  name?: string;
-  sku?: string;
-  description?: string;
-  price?: number;
-  category?: string;
-  amountInStock?: number;
-  manufacturer?: ManufacturerInput;
-  manufacturerId?: string;
-};
+import { ProductInput, UpdateProductInput } from "../types.js";
 
 export const resolvers = {
   Query: {
@@ -175,6 +139,9 @@ export const resolvers = {
     addProduct: async (_p: never, { input }: { input: ProductInput }) => {
       const { manufacturer: manufacturerInput, ...productData } = input;
 
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
       try {
         let finalManufacturerId: string | undefined;
 
@@ -185,12 +152,14 @@ export const resolvers = {
         }
 
         if (manufacturerInput) {
-          const contact = await Contact.create(manufacturerInput.contact);
+          const contact = new Contact(manufacturerInput.contact);
+          await contact.save({ session });
 
-          const newManufacturer = await Manufacturer.create({
+          const newManufacturer = new Manufacturer({
             ...manufacturerInput,
             contact: contact._id,
           });
+          await newManufacturer.save({ session });
 
           finalManufacturerId = newManufacturer._id.toString();
         } else if (input.manufacturerId) {
@@ -200,7 +169,8 @@ export const resolvers = {
 
           const existingManufacturer = await Manufacturer.findById(
             input.manufacturerId
-          );
+          ).session(session);
+
           if (!existingManufacturer) {
             throw new Error("Manufacturer not found");
           }
@@ -212,10 +182,22 @@ export const resolvers = {
           );
         }
 
-        const product = await Product.create({
+        const existingProduct = await Product.findOne({
+          sku: productData.sku,
+        }).session(session);
+        if (existingProduct) {
+          throw new Error("A product with this SKU already exists");
+        }
+
+        const product = new Product({
           ...productData,
           manufacturer: finalManufacturerId,
         });
+
+        await product.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         await product.populate({
           path: "manufacturer",
@@ -224,6 +206,8 @@ export const resolvers = {
 
         return product;
       } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
         throw new Error("Failed to add product:" + (err as Error).message);
       }
     },
