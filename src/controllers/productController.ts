@@ -3,6 +3,8 @@ import Product from "../models/Product.js";
 import mongoose from "mongoose";
 import Contact from "../models/Contact.js";
 import Manufacturer from "../models/Manufacturer.js";
+import { productSchema, updateProductSchema } from "../schemas/productSchema.js";
+
 
 export async function getAllProducts(req: Request, res: Response) {
   // Copilot skrev denna del
@@ -82,7 +84,13 @@ export async function getProductById(req: Request, res: Response) {
 }
 
 export async function addProduct(req: Request, res: Response) {
-  const { manufacturer, manufacturerId, ...productData } = req.body;
+  // Validera med Zod
+  const parseResult = productSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ errors: parseResult.error.flatten() });
+  }
+
+  const { manufacturer, manufacturerId, ...productData } = parseResult.data;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -97,16 +105,27 @@ export async function addProduct(req: Request, res: Response) {
     }
 
     if (manufacturer) {
-      const contact = new Contact(manufacturer.contact);
-      await contact.save({ session });
+      // Kontrollera om tillverkaren redan finns
+      const existingManufacturer = await Manufacturer.findOne({
+        name: manufacturer.name,
+      }).session(session);
 
-      const newManufacturer = new Manufacturer({
-        ...manufacturer,
-        contact: contact._id,
-      });
-      await newManufacturer.save({ session });
+      if (existingManufacturer) {
+        finalManufacturerId = existingManufacturer._id.toString();
+      } else {
+        // Skapa kontakt
+        const contact = new Contact(manufacturer.contact);
+        await contact.save({ session });
 
-      finalManufacturerId = newManufacturer._id.toString();
+        // Skapa ny tillverkare
+        const newManufacturer = new Manufacturer({
+          ...manufacturer,
+          contact: contact._id,
+        });
+        await newManufacturer.save({ session });
+
+        finalManufacturerId = newManufacturer._id.toString();
+      }
     } else if (manufacturerId) {
       if (!mongoose.isValidObjectId(manufacturerId)) {
         throw new Error("Invalid manufacturerId");
@@ -125,6 +144,8 @@ export async function addProduct(req: Request, res: Response) {
         "You must provide either a manufacturer or manufacturerId"
       );
     }
+
+    // Kontrollera duplicerad produkt SKU
     const existingProduct = await Product.findOne({
       sku: productData.sku,
     }).session(session);
@@ -132,6 +153,7 @@ export async function addProduct(req: Request, res: Response) {
       throw new Error("Product with this sku already exists");
     }
 
+    // Skapa produkt
     const product = new Product({
       ...productData,
       manufacturer: finalManufacturerId,
@@ -160,27 +182,38 @@ export async function addProduct(req: Request, res: Response) {
 export async function updateProductById(req: Request, res: Response) {
   const { id } = req.params;
 
+  // Kontrollera att id är giltigt
   if (!mongoose.isValidObjectId(id)) {
     return res.status(400).json({ error: "Not valid objectId" });
   }
 
+  // Validera request body med Zod
+  const parseResult = updateProductSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ errors: parseResult.error.flatten() });
+  }
+
+  const validatedData = parseResult.data;
+
   try {
-    const product = await Product.findByIdAndUpdate(id, req.body, {
+    const updatedProduct = await Product.findByIdAndUpdate(id, validatedData, {
       new: true,
       runValidators: true,
     });
 
-    if (!product) {
+    if (!updatedProduct) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    return res
-      .status(200)
-      .json({ message: "Product updated successfully", product });
+    return res.status(200).json({
+      message: "Product updated successfully",
+      product: updatedProduct,
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: "Failed to update product", err: error });
+    return res.status(500).json({
+      error: "Failed to update product",
+      details: (error as Error).message,
+    });
   }
 }
 

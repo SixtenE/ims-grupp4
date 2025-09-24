@@ -3,6 +3,7 @@ import Product from "../models/Product.js";
 import Manufacturer from "../models/Manufacturer.js";
 import Contact from "../models/Contact.js";
 import { ProductInput, UpdateProductInput } from "../types.js";
+import { productSchema, updateProductSchema } from "../schemas/productSchema.js";
 
 export const resolvers = {
   Query: {
@@ -116,9 +117,7 @@ export const resolvers = {
       { threshold = 5 }: { threshold: number }
     ) => {
       try {
-        const criticalStock = await Product.find({
-          amountInStock: { $lt: threshold },
-        }).populate({
+        return await Product.find({ amountInStock: { $lt: threshold } }).populate({
           path: "manufacturer",
           select: "name contact",
           populate: {
@@ -126,7 +125,6 @@ export const resolvers = {
             select: "name email phone",
           },
         });
-        return criticalStock;
       } catch (err) {
         throw new Error(
           "Failed to fetch critical stock products" + (err as Error).message
@@ -137,45 +135,59 @@ export const resolvers = {
 
   Mutation: {
     addProduct: async (_p: never, { input }: { input: ProductInput }) => {
-      const { manufacturer: manufacturerInput, ...productData } = input;
+      // Validera med Zod
+      const parseResult = productSchema.safeParse(input);
+      if (!parseResult.success) {
+        throw new Error("Validation error: " + JSON.stringify(parseResult.error.flatten()));
+      }
 
+      const { manufacturer: manufacturerInput, manufacturerId, ...productData } = parseResult.data;
       const session = await mongoose.startSession();
       session.startTransaction();
 
       try {
         let finalManufacturerId: string | undefined;
 
-        if (manufacturerInput && input.manufacturerId) {
+        if (manufacturerInput && manufacturerId) {
           throw new Error(
             "You cannot provide both manufacturer and manufacturerId. Choose one."
           );
         }
 
         if (manufacturerInput) {
-          const contact = new Contact(manufacturerInput.contact);
-          await contact.save({ session });
+          // Kontrollera om manufacturer med samma namn redan finns
+          const existingManufacturer = await Manufacturer.findOne({
+            name: manufacturerInput.name,
+          }).session(session);
 
-          const newManufacturer = new Manufacturer({
-            ...manufacturerInput,
-            contact: contact._id,
-          });
-          await newManufacturer.save({ session });
+          if (existingManufacturer) {
+            finalManufacturerId = existingManufacturer._id.toString();
+          } else {
+            const contact = new Contact(manufacturerInput.contact);
+            await contact.save({ session });
 
-          finalManufacturerId = newManufacturer._id.toString();
-        } else if (input.manufacturerId) {
-          if (!mongoose.isValidObjectId(input.manufacturerId)) {
+            const newManufacturer = new Manufacturer({
+              ...manufacturerInput,
+              contact: contact._id,
+            });
+            await newManufacturer.save({ session });
+
+            finalManufacturerId = newManufacturer._id.toString();
+          }
+        } else if (manufacturerId) {
+          if (!mongoose.isValidObjectId(manufacturerId)) {
             throw new Error("Invalid manufacturerId");
           }
 
           const existingManufacturer = await Manufacturer.findById(
-            input.manufacturerId
+            manufacturerId
           ).session(session);
 
           if (!existingManufacturer) {
             throw new Error("Manufacturer not found");
           }
 
-          finalManufacturerId = input.manufacturerId;
+          finalManufacturerId = manufacturerId;
         } else {
           throw new Error(
             "You must provide either a manufacturer or manufacturerId"
@@ -211,15 +223,22 @@ export const resolvers = {
         session.endSession();
       }
     },
-    updateProduct: async (
-      _p: never,
-      { id, input }: { id: string; input: UpdateProductInput }
-    ) => {
+
+    updateProduct: async (_p: never, { id, input }: { id: string; input: UpdateProductInput }) => {
       if (!mongoose.isValidObjectId(id)) {
         throw new Error("Not valid objectId");
       }
+
+      // Validera med Zod
+      const parseResult = updateProductSchema.safeParse(input);
+      if (!parseResult.success) {
+        throw new Error("Validation error: " + JSON.stringify(parseResult.error.flatten()));
+      }
+
+      const validatedData = parseResult.data;
+
       try {
-        const updatedProduct = await Product.findByIdAndUpdate(id, input, {
+        const updatedProduct = await Product.findByIdAndUpdate(id, validatedData, {
           new: true,
           runValidators: true,
         });
