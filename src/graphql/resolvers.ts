@@ -3,7 +3,10 @@ import Product from "../models/Product.js";
 import Manufacturer from "../models/Manufacturer.js";
 import Contact from "../models/Contact.js";
 import { ProductInput, UpdateProductInput } from "../types.js";
-import { productSchema, updateProductSchema } from "../schemas/productSchema.js";
+import {
+  productSchema,
+  updateProductSchema,
+} from "../schemas/productSchema.js";
 
 export const resolvers = {
   Query: {
@@ -117,7 +120,9 @@ export const resolvers = {
       { threshold = 5 }: { threshold: number }
     ) => {
       try {
-        return await Product.find({ amountInStock: { $lt: threshold } }).populate({
+        return await Product.find({
+          amountInStock: { $lt: threshold },
+        }).populate({
           path: "manufacturer",
           select: "name contact",
           populate: {
@@ -138,10 +143,16 @@ export const resolvers = {
       // Validera med Zod
       const parseResult = productSchema.safeParse(input);
       if (!parseResult.success) {
-        throw new Error("Validation error: " + JSON.stringify(parseResult.error.flatten()));
+        throw new Error(
+          "Validation error: " + JSON.stringify(parseResult.error.flatten())
+        );
       }
 
-      const { manufacturer: manufacturerInput, manufacturerId, ...productData } = parseResult.data;
+      const {
+        manufacturer: manufacturerInput,
+        manufacturerId,
+        ...productData
+      } = parseResult.data;
       const session = await mongoose.startSession();
       session.startTransaction();
 
@@ -155,25 +166,18 @@ export const resolvers = {
         }
 
         if (manufacturerInput) {
-          // Kontrollera om manufacturer med samma namn redan finns
-          const existingManufacturer = await Manufacturer.findOne({
-            name: manufacturerInput.name,
-          }).session(session);
+          // Skapa kontakt
+          const contact = new Contact(manufacturerInput.contact);
+          await contact.save({ session });
 
-          if (existingManufacturer) {
-            finalManufacturerId = existingManufacturer._id.toString();
-          } else {
-            const contact = new Contact(manufacturerInput.contact);
-            await contact.save({ session });
+          // Skapa ny tillverkare
+          const newManufacturer = new Manufacturer({
+            ...manufacturerInput,
+            contact: contact._id,
+          });
+          await newManufacturer.save({ session });
 
-            const newManufacturer = new Manufacturer({
-              ...manufacturerInput,
-              contact: contact._id,
-            });
-            await newManufacturer.save({ session });
-
-            finalManufacturerId = newManufacturer._id.toString();
-          }
+          finalManufacturerId = newManufacturer._id.toString();
         } else if (manufacturerId) {
           if (!mongoose.isValidObjectId(manufacturerId)) {
             throw new Error("Invalid manufacturerId");
@@ -194,6 +198,7 @@ export const resolvers = {
           );
         }
 
+        // Kontrollera duplicerad produkt SKU
         const existingProduct = await Product.findOne({
           sku: productData.sku,
         }).session(session);
@@ -201,6 +206,7 @@ export const resolvers = {
           throw new Error("Product with this sku already exists");
         }
 
+        // Skapa produkt
         const product = new Product({
           ...productData,
           manufacturer: finalManufacturerId,
@@ -225,53 +231,50 @@ export const resolvers = {
     },
 
     updateProduct: async (
-  _p: never,
-  { id, input }: { id: string; input: UpdateProductInput }
-) => {
-  if (!mongoose.isValidObjectId(id)) {
-    throw new Error("Not valid objectId");
-  }
-
-  // Validera med Zod
-  const parseResult = updateProductSchema.safeParse(input);
-  if (!parseResult.success) {
-    throw new Error(
-      "Validation error: " +
-        JSON.stringify(parseResult.error.flatten())
-    );
-  }
-
-  const validatedData = parseResult.data;
-
-  if (validatedData.manufacturerId) {
-    if (!mongoose.isValidObjectId(validatedData.manufacturerId)) {
-      throw new Error("Invalid manufacturerId");
-    }
-    const existingManufacturer = await Manufacturer.findById(
-      validatedData.manufacturerId
-    );
-    if (!existingManufacturer) {
-      throw new Error("Manufacturer not found");
-    }
-  }
-
-  try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      validatedData,
-      {
-        new: true,
-        runValidators: true,
+      _p: never,
+      { id, input }: { id: string; input: UpdateProductInput }
+    ) => {
+      if (!mongoose.isValidObjectId(id)) {
+        throw new Error("Not valid objectId");
       }
-    );
-    if (!updatedProduct) throw new Error("Product not found");
-    return updatedProduct;
-  } catch (error) {
-    throw new Error(
-      "Failed to update product:" + (error as Error).message
-    );
-  }
-},
+
+      // Validera med Zod
+      const parseResult = updateProductSchema.safeParse(input);
+      if (!parseResult.success) {
+        throw new Error(
+          "Validation error: " + JSON.stringify(parseResult.error.flatten())
+        );
+      }
+
+      const validatedData = parseResult.data;
+
+      if (validatedData.manufacturerId) {
+        if (!mongoose.isValidObjectId(validatedData.manufacturerId)) {
+          throw new Error("Invalid manufacturerId");
+        }
+        const existingManufacturer = await Manufacturer.findById(
+          validatedData.manufacturerId
+        );
+        if (!existingManufacturer) {
+          throw new Error("Manufacturer not found");
+        }
+      }
+
+      try {
+        const updatedProduct = await Product.findByIdAndUpdate(
+          id,
+          validatedData,
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+        if (!updatedProduct) throw new Error("Product not found");
+        return updatedProduct;
+      } catch (error) {
+        throw new Error("Failed to update product:" + (error as Error).message);
+      }
+    },
 
     deleteProductById: async (_p: never, { id }: { id: string }) => {
       if (!mongoose.isValidObjectId(id)) {

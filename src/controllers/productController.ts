@@ -3,8 +3,10 @@ import Product from "../models/Product.js";
 import mongoose from "mongoose";
 import Contact from "../models/Contact.js";
 import Manufacturer from "../models/Manufacturer.js";
-import { productSchema, updateProductSchema } from "../schemas/productSchema.js";
-
+import {
+  productSchema,
+  updateProductSchema,
+} from "../schemas/productSchema.js";
 
 export async function getAllProducts(req: Request, res: Response) {
   // Copilot skrev denna del
@@ -105,27 +107,18 @@ export async function addProduct(req: Request, res: Response) {
     }
 
     if (manufacturer) {
-      // Kontrollera om tillverkaren redan finns
-      const existingManufacturer = await Manufacturer.findOne({
-        name: manufacturer.name,
-      }).session(session);
+      // Skapa kontakt
+      const contact = new Contact(manufacturer.contact);
+      await contact.save({ session });
 
-      if (existingManufacturer) {
-        finalManufacturerId = existingManufacturer._id.toString();
-      } else {
-        // Skapa kontakt
-        const contact = new Contact(manufacturer.contact);
-        await contact.save({ session });
+      // Skapa ny tillverkare
+      const newManufacturer = new Manufacturer({
+        ...manufacturer,
+        contact: contact._id,
+      });
+      await newManufacturer.save({ session });
 
-        // Skapa ny tillverkare
-        const newManufacturer = new Manufacturer({
-          ...manufacturer,
-          contact: contact._id,
-        });
-        await newManufacturer.save({ session });
-
-        finalManufacturerId = newManufacturer._id.toString();
-      }
+      finalManufacturerId = newManufacturer._id.toString();
     } else if (manufacturerId) {
       if (!mongoose.isValidObjectId(manufacturerId)) {
         throw new Error("Invalid manufacturerId");
@@ -134,6 +127,7 @@ export async function addProduct(req: Request, res: Response) {
       const existingManufacturer = await Manufacturer.findById(
         manufacturerId
       ).session(session);
+
       if (!existingManufacturer) {
         throw new Error("Manufacturer not found");
       }
@@ -208,14 +202,10 @@ export async function updateProductById(req: Request, res: Response) {
   }
 
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      validatedData,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const updatedProduct = await Product.findByIdAndUpdate(id, validatedData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedProduct) {
       return res.status(404).json({ error: "Product not found" });
@@ -232,7 +222,6 @@ export async function updateProductById(req: Request, res: Response) {
     });
   }
 }
-
 
 export async function deleteProductById(req: Request, res: Response) {
   const { id } = req.params;
