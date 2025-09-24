@@ -82,7 +82,6 @@ export async function getProductById(req: Request, res: Response) {
 }
 
 export async function addProduct(req: Request, res: Response) {
-
   const { manufacturer, manufacturerId, ...productData } = req.body;
 
   const session = await mongoose.startSession();
@@ -92,12 +91,9 @@ export async function addProduct(req: Request, res: Response) {
     let finalManufacturerId: string | undefined;
 
     if (manufacturer && manufacturerId) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        error:
-          "You cannot provide both manufacturer and manufacturerId. Choose one.",
-      });
+      throw new Error(
+        "You cannot provide both manufacturer and manufacturerId. Choose one."
+      );
     }
 
     if (manufacturer) {
@@ -113,33 +109,27 @@ export async function addProduct(req: Request, res: Response) {
       finalManufacturerId = newManufacturer._id.toString();
     } else if (manufacturerId) {
       if (!mongoose.isValidObjectId(manufacturerId)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "Invalid manufacturerId" });
+        throw new Error("Invalid manufacturerId");
       }
 
-      const existingManufacturer = await Manufacturer.findById(manufacturerId).session(session);
+      const existingManufacturer = await Manufacturer.findById(
+        manufacturerId
+      ).session(session);
       if (!existingManufacturer) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "Manufacturer not found" });
+        throw new Error("Manufacturer not found");
       }
 
       finalManufacturerId = manufacturerId;
     } else {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        error: "You must provide either manufacturer object or manufacturerId",
-      });
+      throw new Error(
+        "You must provide either a manufacturer or manufacturerId"
+      );
     }
-    const existingProduct = await Product.findOne({ sku: productData.sku }).session(session);
-    if(existingProduct) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        error: "Product with this sku already exist"
-      })
+    const existingProduct = await Product.findOne({
+      sku: productData.sku,
+    }).session(session);
+    if (existingProduct) {
+      throw new Error("Product with this sku already exists");
     }
 
     const product = new Product({
@@ -149,7 +139,6 @@ export async function addProduct(req: Request, res: Response) {
     await product.save({ session });
 
     await session.commitTransaction();
-    session.endSession();
 
     await product.populate({
       path: "manufacturer",
@@ -159,10 +148,12 @@ export async function addProduct(req: Request, res: Response) {
     return res.status(201).json(product);
   } catch (error) {
     await session.abortTransaction();
+    return res.status(500).json({
+      error: "Failed to add product",
+      details: (error as Error).message,
+    });
+  } finally {
     session.endSession();
-  return res.status(500).json({ 
-    error: "Failed to add product",
-    details: (error as Error).message});
   }
 }
 
