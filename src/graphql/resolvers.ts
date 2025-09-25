@@ -246,29 +246,34 @@ export const resolvers = {
         );
       }
 
-      const validatedData = parseResult.data;
+      const { manufacturerId, manufacturer, ...rest } = parseResult.data;
 
-      if (validatedData.manufacturerId) {
-        if (!mongoose.isValidObjectId(validatedData.manufacturerId)) {
-          throw new Error("Invalid manufacturerId");
-        }
-        const existingManufacturer = await Manufacturer.findById(
-          validatedData.manufacturerId
-        );
-        if (!existingManufacturer) {
-          throw new Error("Manufacturer not found");
-        }
-      }
+  const updateData: any = { ...rest };
 
-      try {
-        const updatedProduct = await Product.findByIdAndUpdate(
-          id,
-          validatedData,
-          {
-            new: true,
-            runValidators: true,
-          }
-        );
+  if (manufacturerId) {
+    if (!mongoose.isValidObjectId(manufacturerId)) {
+       throw new Error("Invalid manufacturerId");
+    }
+
+    const existingManufacturer = await Manufacturer.findById(manufacturerId);
+    if (!existingManufacturer) {
+      throw new Error("Manufacturer not found");
+    }
+
+    updateData.manufacturer = manufacturerId;
+  }
+
+  // Här ignorerar vi `manufacturer` vid update (alternativt bygger logik om du vill skapa ny på samma sätt som i addProduct)
+
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate({
+      path: "manufacturer",
+      populate: { path: "contact" },
+    });
+
         if (!updatedProduct) throw new Error("Product not found");
         return updatedProduct;
       } catch (error) {

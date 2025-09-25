@@ -203,3 +203,14 @@ describe("test graphql mutations", () => {
     expect(response.body.data.addProduct).toHaveProperty("_id");
   });
 });
+
+
+describe("Testing update product", () =>{
+  it ("This should work", async () =>{
+    const response = await request(app).put("/api/products/68cbfad4b871d53b536ede68").send({
+      name: "Duplicate SKU Product"
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.name).toBe("Duplicate SKU Product");
+  });
+  });

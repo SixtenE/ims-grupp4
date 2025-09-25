@@ -176,35 +176,41 @@ export async function addProduct(req: Request, res: Response) {
 export async function updateProductById(req: Request, res: Response) {
   const { id } = req.params;
 
-  // Kontrollera att id är giltigt
   if (!mongoose.isValidObjectId(id)) {
     return res.status(400).json({ error: "Not valid objectId" });
   }
 
-  // Validera request body med Zod
   const parseResult = updateProductSchema.safeParse(req.body);
   if (!parseResult.success) {
     return res.status(400).json({ errors: parseResult.error.flatten() });
   }
 
-  const validatedData = parseResult.data;
+  const { manufacturerId, manufacturer, ...rest } = parseResult.data;
 
-  if (validatedData.manufacturerId) {
-    if (!mongoose.isValidObjectId(validatedData.manufacturerId)) {
+  const updateData: any = { ...rest };
+
+  if (manufacturerId) {
+    if (!mongoose.isValidObjectId(manufacturerId)) {
       return res.status(400).json({ error: "Invalid manufacturerId" });
     }
-    const existingManufacturer = await Manufacturer.findById(
-      validatedData.manufacturerId
-    );
+
+    const existingManufacturer = await Manufacturer.findById(manufacturerId);
     if (!existingManufacturer) {
       return res.status(404).json({ error: "Manufacturer not found" });
     }
+
+    updateData.manufacturer = manufacturerId;
   }
 
+  // Här ignorerar vi `manufacturer` vid update (alternativt bygger logik om du vill skapa ny på samma sätt som i addProduct)
+
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(id, validatedData, {
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
+    }).populate({
+      path: "manufacturer",
+      populate: { path: "contact" },
     });
 
     if (!updatedProduct) {
@@ -222,6 +228,7 @@ export async function updateProductById(req: Request, res: Response) {
     });
   }
 }
+
 
 export async function deleteProductById(req: Request, res: Response) {
   const { id } = req.params;
