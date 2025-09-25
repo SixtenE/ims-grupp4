@@ -7,6 +7,7 @@ import {
   productSchema,
   updateProductSchema,
 } from "../schemas/productSchema.js";
+import { zodErrorToObject } from "../utils/zodHelpers.js"
 
 export const resolvers = {
   Query: {
@@ -142,9 +143,9 @@ export const resolvers = {
     addProduct: async (_p: never, { input }: { input: ProductInput }) => {
       // Validera med Zod
       const parseResult = productSchema.safeParse(input);
-      if (!parseResult.success) {
-        throw new Error(
-          "Validation error: " + JSON.stringify(parseResult.error.flatten())
+        if (!parseResult.success) {
+          throw new Error(
+          "Validation error: " + JSON.stringify(zodErrorToObject(parseResult.error))
         );
       }
 
@@ -238,15 +239,15 @@ export const resolvers = {
         throw new Error("Not valid objectId");
       }
 
-      // Validera med Zod
-      const parseResult = updateProductSchema.safeParse(input);
-      if (!parseResult.success) {
-        throw new Error(
-          "Validation error: " + JSON.stringify(parseResult.error.flatten())
-        );
-      }
+  // Validera med Zod
+  const parseResult = updateProductSchema.safeParse(input);
+  if (!parseResult.success) {
+    throw new Error(
+      "Validation error: " + JSON.stringify(zodErrorToObject(parseResult.error))
+    );
+  }
 
-      const { manufacturerId, manufacturer, ...rest } = parseResult.data;
+  const { manufacturerId, manufacturer, ...rest } = parseResult.data;
 
   const updateData: any = { ...rest };
 

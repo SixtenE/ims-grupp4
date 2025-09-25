@@ -174,34 +174,35 @@ describe("test graphql queries", () => {
 describe("test graphql mutations", () => {
   // Mutation addProduct
   it("should add a new product", async () => {
-    const validManufacturerId = "68d28673e1d9b9d685addac9";
+  const validManufacturer = await manufacturerModel.findOne();
+  if (!validManufacturer) throw new Error("No manufacturer found");
 
-    const testProductName = "Test Product " + Math.floor(Math.random() * 1000);
-    const testProductSku = "TESTSKU" + Math.floor(Math.random() * 1000);
+  const testProductName = "Test Product " + Math.floor(Math.random() * 1000);
+  const testProductSku = "TESTSKU" + Math.floor(Math.random() * 1000);
 
-    const mutation = `
-      mutation {
-        addProduct(input: {
-          name: "${testProductName}",
-          sku: "${testProductSku}",
-          description: "A product for testing",
-          price: 19.99,
-          category: "Testing",
-          amountInStock: 100,
-          manufacturerId: "${validManufacturerId}",
-        }){
-          _id
-        }
+  const mutation = `
+    mutation {
+      addProduct(input: {
+        name: "${testProductName}",
+        sku: "${testProductSku}",
+        description: "A product for testing",
+        price: 19.99,
+        category: "Testing",
+        amountInStock: 100,
+        manufacturerId: "${validManufacturer._id}",
+      }){
+        _id
       }
-    `;
+    }
+  `;
 
-    const response = await request(app)
-      .post("/graphql")
-      .send({ query: mutation });
+  const response = await request(app).post("/graphql").send({ query: mutation });
 
-    expect(response.status).toBe(200);
-    expect(response.body.data.addProduct).toHaveProperty("_id");
-  });
+  console.log(response.body); // debug
+
+  expect(response.status).toBe(200);
+  expect(response.body.data.addProduct).toHaveProperty("_id");
+});
 });
 
 

@@ -7,6 +7,7 @@ import {
   productSchema,
   updateProductSchema,
 } from "../schemas/productSchema.js";
+import { zodErrorToObject } from "../utils/zodHelpers.js";
 
 export async function getAllProducts(req: Request, res: Response) {
   // Copilot skrev denna del
@@ -86,32 +87,35 @@ export async function getProductById(req: Request, res: Response) {
 }
 
 export async function addProduct(req: Request, res: Response) {
-  // Validera med Zod
+  // Validate with Zod
   const parseResult = productSchema.safeParse(req.body);
   if (!parseResult.success) {
-    return res.status(400).json({ errors: parseResult.error.flatten() });
+    return res.status(400).json({ errors: zodErrorToObject(parseResult.error) });
   }
 
   const { manufacturer, manufacturerId, ...productData } = parseResult.data;
+
+  // Validate manufacturerId before session
+  if (manufacturerId && !mongoose.isValidObjectId(manufacturerId)) {
+    return res.status(400).json({ error: "Invalid manufacturerId" });
+  }
 
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    let finalManufacturerId: string | undefined;
+    let finalManufacturerId: string;
 
     if (manufacturer && manufacturerId) {
-      throw new Error(
-        "You cannot provide both manufacturer and manufacturerId. Choose one."
-      );
+      return res
+        .status(400)
+        .json({ error: "Provide either manufacturer or manufacturerId, not both" });
     }
 
     if (manufacturer) {
-      // Skapa kontakt
       const contact = new Contact(manufacturer.contact);
       await contact.save({ session });
 
-      // Skapa ny tillverkare
       const newManufacturer = new Manufacturer({
         ...manufacturer,
         contact: contact._id,
@@ -120,54 +124,31 @@ export async function addProduct(req: Request, res: Response) {
 
       finalManufacturerId = newManufacturer._id.toString();
     } else if (manufacturerId) {
-      if (!mongoose.isValidObjectId(manufacturerId)) {
-        throw new Error("Invalid manufacturerId");
-      }
-
-      const existingManufacturer = await Manufacturer.findById(
-        manufacturerId
-      ).session(session);
-
+      const existingManufacturer = await Manufacturer.findById(manufacturerId).session(session);
       if (!existingManufacturer) {
-        throw new Error("Manufacturer not found");
+        return res.status(404).json({ error: "Manufacturer not found" });
       }
-
       finalManufacturerId = manufacturerId;
     } else {
-      throw new Error(
-        "You must provide either a manufacturer or manufacturerId"
-      );
+      return res.status(400).json({ error: "Manufacturer or manufacturerId required" });
     }
 
-    // Kontrollera duplicerad produkt SKU
-    const existingProduct = await Product.findOne({
-      sku: productData.sku,
-    }).session(session);
+    // Check duplicate SKU
+    const existingProduct = await Product.findOne({ sku: productData.sku }).session(session);
     if (existingProduct) {
-      throw new Error("Product with this sku already exists");
+      return res.status(409).json({ error: "Product with this sku already exists" });
     }
 
-    // Skapa produkt
-    const product = new Product({
-      ...productData,
-      manufacturer: finalManufacturerId,
-    });
+    const product = new Product({ ...productData, manufacturer: finalManufacturerId });
     await product.save({ session });
 
     await session.commitTransaction();
-
-    await product.populate({
-      path: "manufacturer",
-      populate: { path: "contact" },
-    });
+    await product.populate({ path: "manufacturer", populate: { path: "contact" } });
 
     return res.status(201).json(product);
-  } catch (error) {
+  } catch (err) {
     await session.abortTransaction();
-    return res.status(500).json({
-      error: "Failed to add product",
-      details: (error as Error).message,
-    });
+    return res.status(500).json({ error: "Failed to add product", details: (err as Error).message });
   } finally {
     session.endSession();
   }
@@ -182,11 +163,10 @@ export async function updateProductById(req: Request, res: Response) {
 
   const parseResult = updateProductSchema.safeParse(req.body);
   if (!parseResult.success) {
-    return res.status(400).json({ errors: parseResult.error.flatten() });
-  }
+    return res.status(400).json({ errors: zodErrorToObject(parseResult.error) });
+  } 
 
   const { manufacturerId, manufacturer, ...rest } = parseResult.data;
-
   const updateData: any = { ...rest };
 
   if (manufacturerId) {
@@ -198,36 +178,26 @@ export async function updateProductById(req: Request, res: Response) {
     if (!existingManufacturer) {
       return res.status(404).json({ error: "Manufacturer not found" });
     }
-
     updateData.manufacturer = manufacturerId;
   }
-
-  // Här ignorerar vi `manufacturer` vid update (alternativt bygger logik om du vill skapa ny på samma sätt som i addProduct)
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
-    }).populate({
-      path: "manufacturer",
-      populate: { path: "contact" },
-    });
+    }).populate({ path: "manufacturer", populate: { path: "contact" } });
 
     if (!updatedProduct) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    return res.status(200).json({
-      message: "Product updated successfully",
-      product: updatedProduct,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error: "Failed to update product",
-      details: (error as Error).message,
-    });
+    // Return product directly (for test compatibility)
+    return res.status(200).json(updatedProduct);
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to update product", details: (err as Error).message });
   }
 }
+
 
 
 export async function deleteProductById(req: Request, res: Response) {
